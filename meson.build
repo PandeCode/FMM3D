@@ -47,21 +47,21 @@ fmm_src = [
   'src/Helmholtz/projections.f',
   'src/Helmholtz/hfmm3dwrap_vec.f',
   'src/Helmholtz/hfmm3d.f',
-  'src/Helmholtz/hndiv_fast.f',
+  'src/Helmholtz/hndiv.f',
   'src/Helmholtz/helmkernels.f',
   'src/Helmholtz/hnumphys.f',
   'src/Laplace/lfmm3d_ndiv.f',
   'src/Laplace/l3dterms.f',
   'src/Laplace/l3dtrans.f',
   'src/Laplace/lpwrouts.f',
-  'src/Laplace/lapkernels_fast.f',
+  'src/Laplace/lapkernels.f',
   'src/Laplace/lwtsexp_sep2.f',
   'src/Laplace/lfmm3d.f',
   'src/Laplace/lwtsexp_sep1.f',
   'src/Laplace/laprouts3d.f',
   'src/Laplace/lfmm3dwrap.f',
   'src/Laplace/lfmm3dwrap_vec.f',
-  'src/Laplace/lndiv_fast.f',
+  'src/Laplace/lndiv.f',
   'src/Stokes/stokkernels.f',
   'src/Stokes/stfmm3d.f',
   'src/Common/besseljs3d.f',
@@ -85,7 +85,7 @@ fmm_src = [
 hfmm_src = [
   'src/Helmholtz/hfmm3dwrap.f',
   'src/Helmholtz/hfmm3dwrap_vec.f',
-  'src/Helmholtz/helmkernels_fast.f'
+  'src/Helmholtz/helmkernels.f'
 ]
 
 lfmm_src = [
