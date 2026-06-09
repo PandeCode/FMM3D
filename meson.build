@@ -112,8 +112,9 @@ stfmm_src = [
 cc = meson.get_compiler('c')
 fc = meson.get_compiler('fortran')
 
-c_args = cc.get_supported_arguments(['-fopenmp'])
-f_args = fc.get_supported_arguments(['-w', '-std=legacy', '-fopenmp'])
+c_args = cc.get_supported_arguments(['-Wno-format', '-march=x86-64-v3', '-funroll-loops'])
+f_args = fc.get_supported_arguments(['-w', '-std=legacy', '-fopenmp', '-march=x86-64-v3', '-funroll-loops'])
+omp_link = ['-fopenmp']
 
 fmm3d_lib = static_library('fmm3d',
   fmm_src,
@@ -149,6 +150,8 @@ foreach name, sources : modules_to_build
     dependencies: [f2py_dep],
     link_with: [fmm3d_lib],
     c_args: c_args,
+    link_args: omp_link,
+
     install: true,
     subdir: 'fmm3dpy'
   )
