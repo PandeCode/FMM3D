@@ -69,10 +69,12 @@ jobs:
           name: wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
 
-      - run: |
-          TAG_NAME=$(date +"build-%Y%m%d-%H%M%S")
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          
+      - run: echo "TAG_NAME=$(date +"linux-build-%Y%m%d-%H%M%S")" >> $GITHUB_ENV
+        if: runner.os == 'Linux'
+
+      - run: "TAG_NAME=$(Get-Date -Format 'build-yyyyMMdd-HHmmss')" >> $env:GITHUB_ENV
+        if: runner.os == 'Windows'
+        
       - uses: softprops/action-gh-release@v2
         with:
           prerelease: true
