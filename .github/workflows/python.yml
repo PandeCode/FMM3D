@@ -90,22 +90,16 @@ jobs:
           name: sdist
           path: dist/*.tar.gz
 
-  release:
-    needs: [build-wheels, build-sdist]
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/download-artifact@v4
+      - run: |
+          TAG_NAME=$(date +"build-%Y%m%d-%H%M%S")
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          sha256sum ./waylyrics.so > waylyrics_sha256
+          - name: Upload Release Assets
+      - uses: softprops/action-gh-release@v2
         with:
-          path: release-assets
-          merge-multiple: true
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
+          prerelease: true
+          name: ${{ env.TAG_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
           files: |
             release-assets/*.whl
             release-assets/*.tar.gz
