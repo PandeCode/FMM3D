@@ -112,8 +112,8 @@ stfmm_src = [
 cc = meson.get_compiler('c')
 fc = meson.get_compiler('fortran')
 
-c_args = cc.get_supported_arguments(['-Wno-format'])
-f_args = fc.get_supported_arguments(['-w', '-std=legacy'])
+c_args = cc.get_supported_arguments(['-Wno-format', '-fopenmp'])
+f_args = fc.get_supported_arguments(['-w', '-std=legacy', '-fopenmp'])
 
 fmm3d_lib = static_library('fmm3d',
   fmm_src,
