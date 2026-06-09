@@ -69,6 +69,20 @@ jobs:
           name: wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
 
+      - run: |
+          TAG_NAME=$(date +"build-%Y%m%d-%H%M%S")
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          sha256sum ./waylyrics.so > waylyrics_sha256
+          - name: Upload Release Assets
+          
+      - uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          name: ${{ env.TAG_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
+          files: wheelhouse/*.whl
+          generate_release_notes: true
+
   build-sdist:
     runs-on: ubuntu-latest
 
@@ -90,17 +104,4 @@ jobs:
           name: sdist
           path: dist/*.tar.gz
 
-      - run: |
-          TAG_NAME=$(date +"build-%Y%m%d-%H%M%S")
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          sha256sum ./waylyrics.so > waylyrics_sha256
-          - name: Upload Release Assets
-      - uses: softprops/action-gh-release@v2
-        with:
-          prerelease: true
-          name: ${{ env.TAG_NAME }}
-          tag_name: ${{ env.TAG_NAME }}
-          files: |
-            release-assets/*.whl
-            release-assets/*.tar.gz
-          generate_release_notes: true
+
