@@ -16,13 +16,13 @@ jobs:
         include:
           - os: ubuntu-latest
             gcc_version: latest
-          # - os: macos-15
-          #   arch: arm64
-          #   macos_deployment_target: '11.0'
-          # - os: macos-15-intel
-          #   arch: x86_64
-          #   macos_deployment_target: '10.15'
-          # - os: windows-latest
+          - os: macos-15
+            arch: arm64
+            macos_deployment_target: '11.0'
+          - os: macos-15-intel
+            arch: x86_64
+            macos_deployment_target: '10.15'
+          - os: windows-latest
 
     steps:
       - uses: actions/checkout@v6
