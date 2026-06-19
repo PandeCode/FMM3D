@@ -18,11 +18,11 @@ jobs:
             gcc_version: latest
           - os: macos-15
             arch: arm64
-            macos_deployment_target: '11.0'
+            macos_deployment_target: '15.0'
           - os: macos-15-intel
             arch: x86_64
-            macos_deployment_target: '10.15'
-          - os: windows-latest
+            macos_deployment_target: '15.0'
+          - os: windows-2022
 
     steps:
       - uses: actions/checkout@v6
@@ -40,7 +40,7 @@ jobs:
           CIBW_CONFIG_SETTINGS: compile-args=-v
           CIBW_SKIP: '*-musllinux* *i686 *-win32'
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
-          CIBW_BEFORE_ALL_LINUX: dnf install -y gcc-gfortran
+          CIBW_BEFORE_ALL_LINUX: dnf install -y gcc-gfortran libgomp
           CIBW_BEFORE_ALL_MACOS: >
             ARCH=$(uname -m) &&
             curl -L https://github.com/isuruf/gcc/releases/download/gcc-11.3.0-2/gfortran-darwin-${ARCH}-native.tar.gz -o /tmp/gfortran.tar.gz &&
@@ -52,12 +52,19 @@ jobs:
             sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libquadmath.0.dylib /usr/local/lib/ &&
             sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libquadmath.dylib /usr/local/lib/ &&
             sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libgcc_s.1.dylib /usr/local/lib/ &&
-            sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libgcc_s.1.1.dylib /usr/local/lib/
-          CIBW_ARCHS_MACOS: ${{ matrix.arch }}
+            sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libgcc_s.1.1.dylib /usr/local/lib/ &&
+            sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libobjc.A.dylib /usr/local/lib/ &&
+            sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libatomic.dylib /usr/local/lib/ &&
+            sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libatomic.a /usr/local/lib/ &&
+            brew install libomp &&
+            sudo ln -sf $(brew --prefix libomp)/lib/libomp.dylib /usr/local/lib/libomp.dylib
           CIBW_ENVIRONMENT_MACOS: >
             MACOSX_DEPLOYMENT_TARGET=${{ matrix.macos_deployment_target }}
             SDKROOT=$(xcrun --show-sdk-path)
-            LIBRARY_PATH=$(xcrun --show-sdk-path)/usr/lib
+            LIBRARY_PATH=$(xcrun --show-sdk-path)/usr/lib:/usr/local/lib:/opt/gfortran-darwin-${ARCH}-native/lib
+            DYLD_LIBRARY_PATH=/usr/local/lib:/opt/gfortran-darwin-${ARCH}-native/lib
+            LDFLAGS=-latomic
+          CIBW_ARCHS_MACOS: ${{ matrix.arch }}
           CIBW_BEFORE_BUILD_WINDOWS: pip install delvewheel
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             delvewheel repair --add-path C:\msys64\mingw64\bin -w {dest_dir} {wheel}
@@ -68,6 +75,22 @@ jobs:
         with:
           name: wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
+
+      - run: echo "TAG_NAME=$(date +"linux-build-%Y%m%d-%H%M%S")" >> $GITHUB_ENV
+        if: runner.os != 'Windows'
+
+      - run: |
+          "TAG_NAME=$(Get-Date -Format 'windows-build-yyyyMMdd-HHmmss')" >> $env:GITHUB_ENV
+        shell: pwsh
+        if: runner.os == 'Windows'
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          name: ${{ env.TAG_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
+          files: wheelhouse/*.whl
+          generate_release_notes: true
 
   build-sdist:
     runs-on: ubuntu-latest
@@ -89,19 +112,3 @@ jobs:
         with:
           name: sdist
           path: dist/*.tar.gz
-
-  publish:
-    needs: [build-wheels, build-sdist]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1

@@ -112,8 +112,14 @@ stfmm_src = [
 cc = meson.get_compiler('c')
 fc = meson.get_compiler('fortran')
 
-c_args = cc.get_supported_arguments(['-Wno-format'])
-f_args = fc.get_supported_arguments(['-w', '-std=legacy'])
+c_args = cc.get_supported_arguments(['-Wno-format', '-march=x86-64-v3', '-funroll-loops'])
+f_args = fc.get_supported_arguments(['-w', '-std=legacy', '-fopenmp', '-march=native', '-funroll-loops'])
+
+if host_machine.system() == 'darwin'
+  link_args = ['-lomp']
+else
+  link_args = ['-fopenmp']
+endif
 
 fmm3d_lib = static_library('fmm3d',
   fmm_src,
@@ -149,6 +155,7 @@ foreach name, sources : modules_to_build
     dependencies: [f2py_dep],
     link_with: [fmm3d_lib],
     c_args: c_args,
+    link_args: link_args,
     install: true,
     subdir: 'fmm3dpy'
   )
