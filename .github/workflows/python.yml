@@ -31,6 +31,16 @@ jobs:
         if: runner.os == 'Linux' || runner.os == 'Windows'
         with:
           compiler: gcc
+      - name: Setup Fortran toolchain (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install gcc
+          GCC_PREFIX="$(brew --prefix gcc)"
+          echo "FC=$GCC_PREFIX/bin/gfortran-14" >> $GITHUB_ENV
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+          echo "LDFLAGS=-L$GCC_PREFIX/lib/gcc/14" >> $GITHUB_ENV
+          echo "DYLD_LIBRARY_PATH=$GCC_PREFIX/lib/gcc/14" >> $GITHUB_ENV
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.4.0
@@ -58,7 +68,13 @@ jobs:
             sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libatomic.a /usr/local/lib/ &&
             brew install libomp &&
             sudo ln -sf $(brew --prefix libomp)/lib/libomp.dylib /usr/local/lib/libomp.dylib
+
           CIBW_ENVIRONMENT_MACOS: >
+            FC="$FC"
+            CC="$CC"
+            CXX="$CXX"
+            LDFLAGS="$LDFLAGS"
+            DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH"
             MACOSX_DEPLOYMENT_TARGET=${{ matrix.macos_deployment_target }}
             SDKROOT=$(xcrun --show-sdk-path)
             LIBRARY_PATH=$(xcrun --show-sdk-path)/usr/lib:/usr/local/lib:/opt/gfortran-darwin-${ARCH}-native/lib

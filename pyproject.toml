@@ -13,7 +13,7 @@ requires = [
 ]
 
 [project]
-name = "fmm3dpy"
+name = "fmm3dpy-fast"
 description = "This package contains basic routines for Laplace, Helmholtz, Stokes and Maxwell fast multipole methods in three dimensions. Compiled with openmp"
 readme = "README.md"
 python_requires = ">=3.10.0"
