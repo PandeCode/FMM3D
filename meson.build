@@ -116,9 +116,10 @@ c_args = cc.get_supported_arguments(['-Wno-format', '-funroll-loops'])
 f_args = fc.get_supported_arguments(['-w', '-std=legacy', '-fopenmp', '-funroll-loops'])
 
 # clang links the extensions on macos and has no -fopenmp, so name the
-# libomp shipped with the gfortran toolchain directly
+# libomp shipped with the gfortran toolchain directly. clang also leaves out
+# libgcc, which holds the aarch64 atomics helpers the openmp code calls
 if host_machine.system() == 'darwin'
-  link_args = ['-lomp']
+  link_args = ['-lomp', '-lgcc']
 else
   link_args = ['-fopenmp']
 endif
