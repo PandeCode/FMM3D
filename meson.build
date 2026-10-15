@@ -115,7 +115,13 @@ fc = meson.get_compiler('fortran')
 c_args = cc.get_supported_arguments(['-Wno-format', '-funroll-loops'])
 f_args = fc.get_supported_arguments(['-w', '-std=legacy', '-fopenmp', '-funroll-loops'])
 
-link_args = ['-fopenmp']
+# clang links the extensions on macos and has no -fopenmp, so name the
+# libomp shipped with the gfortran toolchain directly
+if host_machine.system() == 'darwin'
+  link_args = ['-lomp']
+else
+  link_args = ['-fopenmp']
+endif
 
 fmm3d_lib = static_library('fmm3d',
   fmm_src,
