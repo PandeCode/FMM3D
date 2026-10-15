@@ -80,7 +80,7 @@ jobs:
         if: runner.os == 'macOS' && runner.arch == 'X64'
 
       - run: |
-          "TAG_NAME=$(Get-Date -Format 'windows-build-yyyyMMdd-HHmmss')" >> $env:GITHUB_ENV
+          "TAG_NAME=windows-build-$(Get-Date -Format 'yyyyMMdd-HHmmss')" >> $env:GITHUB_ENV
         shell: pwsh
         if: runner.os == 'Windows'
 
