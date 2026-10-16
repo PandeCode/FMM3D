@@ -41,6 +41,9 @@ jobs:
           CIBW_SKIP: '*-musllinux* *i686 *-win32'
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_BEFORE_ALL_LINUX: dnf install -y gcc-gfortran libgomp
+          # the gfortran toolchain's libomp is from 2022 and too old to share
+          # with other extensions' openmp, so conda-forge's llvm-openmp
+          # replaces it
           CIBW_BEFORE_ALL_MACOS: >
             ARCH=$(uname -m) &&
             curl -L https://github.com/isuruf/gcc/releases/download/gcc-11.3.0-2/gfortran-darwin-${ARCH}-native.tar.gz -o /tmp/gfortran.tar.gz &&
@@ -53,12 +56,26 @@ jobs:
             sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libquadmath.dylib /usr/local/lib/ &&
             sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libgcc_s.1.dylib /usr/local/lib/ &&
             sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libgcc_s.1.1.dylib /usr/local/lib/ &&
-            sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libomp.dylib /usr/local/lib/
+            sudo ln -sf /opt/gfortran-darwin-${ARCH}-native/lib/libomp.dylib /usr/local/lib/ &&
+            if [ "$ARCH" = arm64 ];
+            then OMP_PKG=osx-arm64/llvm-openmp-21.1.8-h4a912ad_0 OMP_SHA=56bcd20a0a44ddd143b6ce605700fdf876bcf5c509adc50bf27e76673407a070;
+            else OMP_PKG=osx-64/llvm-openmp-21.1.8-h472b3d1_0 OMP_SHA=2a41885f44cbc1546ff26369924b981efa37a29d20dc5445b64539ba240739e6;
+            fi &&
+            curl -L https://conda.anaconda.org/conda-forge/$OMP_PKG.conda -o /tmp/llvm-openmp.conda &&
+            echo "$OMP_SHA  /tmp/llvm-openmp.conda" | shasum -a 256 -c &&
+            mkdir -p /tmp/llvm-openmp &&
+            unzip -p /tmp/llvm-openmp.conda 'pkg-*.tar.zst' | zstd -dc | tar -x -C /tmp/llvm-openmp &&
+            sudo cp /tmp/llvm-openmp/lib/libomp.dylib /opt/gfortran-darwin-${ARCH}-native/lib/libomp.dylib
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
           CIBW_ENVIRONMENT_MACOS: >
             MACOSX_DEPLOYMENT_TARGET=${{ matrix.macos_deployment_target }}
             SDKROOT=$(xcrun --show-sdk-path)
             LIBRARY_PATH=$(xcrun --show-sdk-path)/usr/lib
+          CIBW_BEFORE_BUILD_MACOS: pip install wheel
+          # one libomp id across wheels, so dyld shares a single openmp runtime
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
+            delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel} &&
+            bash python/share_libomp.sh {dest_dir}/*.whl
           CIBW_BEFORE_BUILD_WINDOWS: pip install delvewheel
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             delvewheel repair --add-path C:\msys64\mingw64\bin -w {dest_dir} {wheel}
